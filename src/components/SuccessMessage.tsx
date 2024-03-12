@@ -1,5 +1,5 @@
 type SuccessMessageProps = {
-  message: string;
+  message: string | undefined;
 };
 
 export default function SuccessMessage({ message }: SuccessMessageProps) {
@@ -8,7 +8,7 @@ export default function SuccessMessage({ message }: SuccessMessageProps) {
   return (
     <div className="alert alert-success">
       <div className="flex-1">
-        <label>{message}</label>
+        <label className="text-white">{message}</label>
       </div>
     </div>
   );
