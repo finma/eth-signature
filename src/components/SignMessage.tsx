@@ -5,6 +5,9 @@ import { ethers } from "ethers";
 import ErrorMessage from "./ErrorMessage";
 import { keccak256 } from "js-sha3";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
+import QRCode from "qrcode";
+import Image from "next/image";
+import { saveAs } from "file-saver";
 
 type Signature =
   | {
@@ -40,11 +43,11 @@ const signMessage = async ({ setError, message }: any) => {
 };
 
 export default function SignMessage() {
-  const resultBox = useRef();
   const [signatures, setSignatures] = useState<Signature[]>([]);
   const [error, setError] = useState<string>();
   const [selectedDocs, setSelectedDocs] = useState<File[]>([]);
   const [messageHash, setMessageHash] = useState<string>();
+  const [src, setSrc] = useState<string>();
 
   const handleInput = (e: React.ChangeEvent<any>) => {
     e.target.files?.length && setSelectedDocs(Array.from(e.target.files));
@@ -75,14 +78,23 @@ export default function SignMessage() {
         message: messageHash,
       });
       if (sig) {
+        generateQRCode(JSON.stringify(sig));
         setSignatures([...signatures, sig]);
       }
+    } else {
+      setError("Input file");
     }
   };
 
+  const generateQRCode = (data: any) => QRCode.toDataURL(data).then(setSrc);
+
+  const downloadImage = (filename: string) => {
+    saveAs(src!, `QRCODE-${filename.replace(".pdf", "")}.png`);
+  };
+
   return (
-    <form className="m-4" onSubmit={handleSign}>
-      <div className="credit-card w-full shadow-lg mx-auto rounded-xl bg-white">
+    <form className="w-full">
+      <div className="credit-card w-full mx-auto rounded-xl bg-white">
         <main className="mt-4 p-4">
           <h1 className="text-xl font-semibold text-gray-700 text-center">
             Sign messages
@@ -124,30 +136,51 @@ export default function SignMessage() {
         />
         <footer className="p-4">
           <button
-            type="submit"
+            // type="submit"
+            onClick={handleSign}
             className="btn btn-primary btn-block uppercase text-white"
           >
             Sign message
           </button>
-          <ErrorMessage message={error} />
+          <div className="mt-4">
+            <ErrorMessage message={error} />
+          </div>
         </footer>
 
-        {signatures.map((sig: any, idx: number) => {
+        {signatures.map((sig: Signature, idx: number) => {
+          console.log(selectedDocs[idx]);
+          const filename = selectedDocs[idx].name;
           return (
-            <div className="p-2" key={sig}>
+            <div className="p-2" key={sig?.signature}>
+              {/* <QRCode value={sig?.signature!} size={64} /> */}
+              <p className="font-semibold">File: {filename}</p>
+              <p className="font-semibold">Signer: {sig?.address}</p>
+              <div className="text-center w-[200px]">
+                <Image src={src!} width={200} height={200} alt="QRCode" />
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    downloadImage(filename);
+                  }}
+                  className="btn"
+                >
+                  Download
+                </button>
+              </div>
               <div className="my-3">
-                <p>
-                  Message {idx + 1}: {sig.message}
+                <p>Catatan: Simpan QRCode diatas untuk memverifikasi dokumen</p>
+                {/* <p>
+                  Message {idx + 1}: {sig?.message}
                 </p>
-                <p>Signer: {sig.address}</p>
+                <p>Signer: {sig?.address}</p>
                 <textarea
                   // type="text"
                   readOnly
                   ref={resultBox.current}
                   className="textarea w-full h-24 textarea-bordered focus:ring focus:outline-none"
                   placeholder="Generated signature"
-                  value={sig.signature}
-                />
+                  value={sig?.signature}
+                /> */}
               </div>
             </div>
           );
