@@ -1,16 +1,22 @@
+import NavBar from "@/components/NavBar";
 import SignMessage from "@/components/SignMessage";
+import { Tab, Tabs } from "@/components/Tabs";
 import VerifyMessage from "@/components/VerifyMessage";
-import Image from "next/image";
 
 export default function Home() {
   return (
-    <main className="flex flex-wrap min-h-screen">
-      <div className="w-full lg:w-1/2">
-        <SignMessage />
-      </div>
-      <div className="w-full lg:w-1/2">
-        <VerifyMessage />
-      </div>
-    </main>
+    <>
+      <NavBar />
+      <main className="flex flex-wrap min-h-screen">
+        <Tabs>
+          <Tab label="Sign Message">
+            <SignMessage />
+          </Tab>
+          <Tab label="Verify Message">
+            <VerifyMessage />
+          </Tab>
+        </Tabs>
+      </main>
+    </>
   );
 }
