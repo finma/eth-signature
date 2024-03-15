@@ -120,7 +120,7 @@ export default function VerifyMessage() {
 
   const handleVerification = async (e: React.ChangeEvent<any>) => {
     e.preventDefault();
-    const data = new FormData(e.target);
+    // const data = new FormData(e.target);
     setSuccessMsg("");
     setError("");
     const isValid = await verifyMessage({
