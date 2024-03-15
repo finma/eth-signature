@@ -185,7 +185,7 @@ export default function VerifyMessage() {
                     onChange={handleInputQRCode}
                     className="file-input file-input-bordered file-input-primary file-input-sm w-full text-gray-400 text-sm"
                   />
-                  {/* <button
+                  <button
                     onClick={(e) => {
                       e.preventDefault();
                       handleScan(!btnScan);
@@ -193,7 +193,7 @@ export default function VerifyMessage() {
                     className="btn btn-sm btn-primary text-white"
                   >
                     Scan QRCode
-                  </button> */}
+                  </button>
                 </div>
               </label>
 
