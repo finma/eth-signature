@@ -1,8 +1,13 @@
 "use client";
 
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faEyeSlash } from "@fortawesome/free-regular-svg-icons";
 import Image from "next/image";
+import { useState } from "react";
 
 export default function LoginPage() {
+  const [isPassword, setIsPassword] = useState(true);
+
   const handleLogin = (e: React.ChangeEvent<any>) => {
     e.preventDefault();
 
@@ -52,36 +57,44 @@ export default function LoginPage() {
                 <div className="divider">OR</div>
 
                 {/* INPUT EMAIL */}
-                <label
-                  htmlFor="email"
-                  className="mb-2 text-sm text-start text-grey-900"
-                >
-                  Email*
+                <label className="form-control w-full">
+                  <div className="label">
+                    <span className="label-text">Email*</span>
+                  </div>
+                  <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    placeholder="Enter an email"
+                    required
+                    className="input input-bordered flex items-center w-full px-5 py-4 mb-2 mr-2 text-sm font-medium outline-none focus:bg-grey-400 placeholder:text-grey-700 bg-grey-200 text-dark-grey-900 rounded-2xl"
+                  />
                 </label>
-                <input
-                  id="email"
-                  type="email"
-                  name="email"
-                  placeholder="Enter an email"
-                  required
-                  className="input input-bordered flex items-center w-full px-5 py-4 mr-2 text-sm font-medium outline-none focus:bg-grey-400 mb-4 placeholder:text-grey-700 bg-grey-400 text-dark-grey-900 rounded-2xl"
-                />
 
                 {/* INPUT PASSWORD */}
-                <label
-                  htmlFor="password"
-                  className="mb-2 text-sm text-start text-grey-900"
-                >
-                  Password*
+                <label className="form-control w-full">
+                  <div className="label">
+                    <span className="label-text">Password*</span>
+                  </div>
+                  <label className="input input-bordered flex items-center w-full px-5 py-4 mb-6 mr-2 text-sm font-medium outline-none focus:bg-grey-400 placeholder:text-grey-700 bg-grey-200 text-dark-grey-900 rounded-2xl">
+                    <input
+                      id="password"
+                      type={isPassword ? "password" : "text"}
+                      name="password"
+                      placeholder="Enter a password"
+                      required
+                      className="grow"
+                    />
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsPassword(!isPassword);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={isPassword ? faEyeSlash : faEye} />
+                    </button>
+                  </label>
                 </label>
-                <input
-                  id="password"
-                  type="password"
-                  name="password"
-                  placeholder="Enter a password"
-                  required
-                  className="input input-bordered flex items-center w-full px-5 py-4 mb-6 mr-2 text-sm font-medium outline-none focus:bg-grey-400 placeholder:text-grey-700 bg-grey-200 text-dark-grey-900 rounded-2xl"
-                />
 
                 {/* BUTTON SIGNIN */}
                 <button className="btn btn-primary w-full md:w-96 rounded-2xl text-white">
