@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-regular-svg-icons";
 import Image from "next/image";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [isPassword, setIsPassword] = useState(true);
@@ -139,15 +140,9 @@ export default function LoginPage() {
                 {/* NOT REGISTERED */}
                 <p className="text-sm leading-relaxed text-grey-900 mt-4">
                   Already have an account?{" "}
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      console.log("create account");
-                    }}
-                    className="font-bold text-grey-700"
-                  >
+                  <Link href="/login" className="font-bold text-grey-700">
                     Sign in here
-                  </button>
+                  </Link>
                 </p>
               </form>
             </div>

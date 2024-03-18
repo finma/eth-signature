@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [isPassword, setIsPassword] = useState(true);
@@ -140,15 +141,9 @@ export default function LoginPage() {
                   {/* NOT REGISTERED */}
                   <p className="text-sm leading-relaxed text-grey-900 mt-4">
                     Not registered yet?{" "}
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        console.log("create account");
-                      }}
-                      className="font-bold text-grey-700"
-                    >
+                    <Link href="/register" className="font-bold text-grey-700">
                       Create an Account
-                    </button>
+                    </Link>
                   </p>
                 </form>
               </div>
