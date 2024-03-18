@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signOut,
 } from "firebase/auth";
 import Cookies from "js-cookie";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -68,6 +69,26 @@ export const AuthContextProvider = ({
     }
   };
 
+  const logOut = async () => {
+    try {
+      await signOut(auth);
+
+      return {
+        error: false,
+        message: "Signout success!",
+      };
+    } catch (error: any) {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+
+      return {
+        error: true,
+        message: errorMessage,
+        code: errorCode,
+      };
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser !== null) {
@@ -82,7 +103,7 @@ export const AuthContextProvider = ({
   }, []);
 
   return (
-    <AuthContext.Provider value={{ googleSignIn, emailSignIn, user }}>
+    <AuthContext.Provider value={{ googleSignIn, emailSignIn, logOut, user }}>
       {children}
     </AuthContext.Provider>
   );
