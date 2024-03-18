@@ -54,7 +54,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <main className="bg-white rounded-lg">
+      <main className="bg-white rounded-lg mt-8 xl:mt-0">
         <div className="container flex flex-col mx-auto bg-white rounded-lg">
           <div className="flex justify-center w-full h-full my-auto xl:gap-14 lg:justify-normal md:gap-5 draggable">
             <div className="flex items-center justify-center w-full">
