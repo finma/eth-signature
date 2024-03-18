@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "react-toastify/dist/ReactToastify.css";
 import { AuthContextProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
