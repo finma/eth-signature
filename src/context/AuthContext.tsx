@@ -1,9 +1,14 @@
 "use client";
 
 import { auth } from "@/config/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+} from "firebase/auth";
 import Cookies from "js-cookie";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext<any>(undefined);
 
@@ -12,6 +17,29 @@ export const AuthContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
+  const [user, setUser] = useState({});
+
+  const googleSignIn = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+
+      return {
+        error: false,
+        message: "Signin with google success!",
+      };
+    } catch (error: any) {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+
+      return {
+        error: true,
+        message: errorMessage,
+        code: errorCode,
+      };
+    }
+  };
+
   const emailSignIn = async (email: string, password: string) => {
     try {
       const userCredential = await signInWithEmailAndPassword(
@@ -40,8 +68,21 @@ export const AuthContextProvider = ({
     }
   };
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser !== null) {
+        setUser(currentUser);
+      }
+      // console.log("current user: ", currentUser);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ emailSignIn }}>
+    <AuthContext.Provider value={{ googleSignIn, emailSignIn, user }}>
       {children}
     </AuthContext.Provider>
   );
