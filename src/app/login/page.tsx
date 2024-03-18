@@ -1,5 +1,6 @@
 "use client";
 
+import { UserAuth } from "@/context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-regular-svg-icons";
 import Image from "next/image";
@@ -8,15 +9,25 @@ import { useState } from "react";
 export default function LoginPage() {
   const [isPassword, setIsPassword] = useState(true);
 
-  const handleLogin = (e: React.ChangeEvent<any>) => {
+  const { emailSignIn } = UserAuth();
+
+  const handleLogin = async (e: React.ChangeEvent<any>) => {
     e.preventDefault();
 
     const data = new FormData(e.target);
+    const email = data.get("email");
+    const password = data.get("password");
 
-    console.log("data login: ", {
-      email: data.get("email"),
-      password: data.get("password"),
-    });
+    // console.log("data login: ", {
+    //   email: data.get("email"),
+    //   password: data.get("password"),
+    // });
+
+    if (email !== null && password !== null) {
+      const result = await emailSignIn(email as string, password as string);
+
+      console.log("result: ", result);
+    }
   };
 
   return (
