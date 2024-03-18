@@ -12,9 +12,9 @@ export default function LoginPage() {
   const [isPassword, setIsPassword] = useState(true);
 
   const router = useRouter();
-  const { emailSignIn } = UserAuth();
+  const { emailSignIn, googleSignIn } = UserAuth();
 
-  const handleLogin = async (e: React.ChangeEvent<any>) => {
+  const handleLoginWithEmail = async (e: React.ChangeEvent<any>) => {
     e.preventDefault();
 
     const data = new FormData(e.target);
@@ -40,6 +40,17 @@ export default function LoginPage() {
     }
   };
 
+  const handleLoginWithGoogle = async () => {
+    const result = await googleSignIn();
+
+    if (result.error) {
+      toast.error(result.message);
+    } else {
+      toast.success(result.message);
+      router.push("/");
+    }
+  };
+
   return (
     <>
       <main className="bg-white rounded-lg">
@@ -48,7 +59,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-center w-full">
               <div className="flex items-center xl:p-10">
                 <form
-                  onSubmit={handleLogin}
+                  onSubmit={handleLoginWithEmail}
                   className="flex flex-col w-full h-full pb-6 text-center bg-white rounded-3xl"
                 >
                   <h3 className="mb-3 text-4xl font-extrabold text-dark-grey-900">
@@ -62,7 +73,8 @@ export default function LoginPage() {
                   <button
                     onClick={(e) => {
                       e.preventDefault();
-                      console.log("sign in with google");
+                      handleLoginWithGoogle();
+                      // console.log("sign in with google");
                     }}
                     className="btn flex items-center justify-center w-full rounded-2xl text-grey-900 bg-grey-300 "
                   >
