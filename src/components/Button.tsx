@@ -11,7 +11,7 @@ const Button = ({ children, onClick, className, type }: ButtonType) => {
   return (
     <button
       onClick={onClick}
-      className={`btn w-full md:w-96 rounded-2xl text-white ${
+      className={`btn btn-block rounded-2xl text-white ${
         type === "primary" ? "btn-primary" : "btn-secondary"
       } ${className}`}
     >
