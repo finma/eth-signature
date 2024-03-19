@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 
 const Tabs = ({ children }: any) => {
   const [activeTab, setActiveTab] = useState(children[0].props.label);
@@ -11,14 +11,16 @@ const Tabs = ({ children }: any) => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto mt-8">
       <div role="tablist" className="tabs tabs-lifted">
         {children.map((child: any) => (
           <button
             key={child.props.label}
             role="tab"
-            className={`${
-              activeTab === child.props.label ? "tab tab-active" : "tab"
+            className={`font-semibold text-base ${
+              activeTab === child.props.label
+                ? "tab tab-active rounded-t-xl "
+                : "tab"
             }`}
             onClick={(e) => handleClick(e, child.props.label)}
           >
@@ -26,14 +28,24 @@ const Tabs = ({ children }: any) => {
           </button>
         ))}
       </div>
-      <div className="py-4 w-full bg-white rounded-b-xl">
-        {children.map((child: any) => {
-          if (child.props.label === activeTab) {
-            return <div key={child.props.label}>{child.props.children}</div>;
-          }
-          return null;
-        })}
-      </div>
+      {/* <div className=""> */}
+      {children.map((child: any, index: number) => {
+        return (
+          <div
+            key={child.props.label}
+            role="tabpanel"
+            className={`tab-content bg-base-100 border-base-300 rounded-b-xl p-6 ${
+              index === 0 ? "rounded-tr-xl" : "rounded-tl-xl"
+            }`}
+            style={{
+              display: activeTab === child.props.label ? "block" : "none",
+            }}
+          >
+            {child.props.children}
+          </div>
+        );
+      })}
+      {/* </div> */}
     </div>
   );
 };
