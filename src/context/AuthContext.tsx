@@ -10,6 +10,7 @@ import {
   signOut,
 } from "firebase/auth";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext<any>(undefined);
@@ -20,6 +21,8 @@ export const AuthContextProvider = ({
   children: React.ReactNode;
 }) => {
   const [user, setUser] = useState({});
+
+  const router = useRouter();
 
   const createAccount = async (email: string, password: string) => {
     try {
@@ -101,6 +104,10 @@ export const AuthContextProvider = ({
   const logOut = async () => {
     try {
       await signOut(auth);
+
+      Cookies.remove("uid");
+
+      router.push("/");
 
       return {
         error: false,
