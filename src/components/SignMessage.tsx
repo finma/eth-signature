@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { ethers } from "ethers";
 import ErrorMessage from "./ErrorMessage";
 import { keccak256 } from "js-sha3";
@@ -8,6 +8,7 @@ import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import QRCode from "qrcode";
 import Image from "next/image";
 import { saveAs } from "file-saver";
+import Button from "./Button";
 
 type Signature =
   | {
@@ -50,6 +51,7 @@ export default function SignMessage() {
   const [src, setSrc] = useState<string>();
 
   const handleInput = (e: React.ChangeEvent<any>) => {
+    setError("");
     e.target.files?.length && setSelectedDocs(Array.from(e.target.files));
 
     if (e.target.files?.length) {
@@ -67,8 +69,7 @@ export default function SignMessage() {
     }
   };
 
-  const handleSign = async (e: React.ChangeEvent<any>) => {
-    e.preventDefault();
+  const handleSign = async () => {
     if (selectedDocs.length) {
       // const data = new FormData(e.target);
       setError("");
@@ -93,7 +94,7 @@ export default function SignMessage() {
   };
 
   return (
-    <form className="w-full">
+    <main className="w-full">
       <div className="credit-card w-full mx-auto rounded-xl bg-white">
         <main className="mt-4 p-4">
           <h1 className="text-xl font-semibold text-gray-700 text-center">
@@ -135,13 +136,16 @@ export default function SignMessage() {
           pluginRenderers={DocViewerRenderers}
         />
         <footer className="p-4">
-          <button
+          {/* <button
             // type="submit"
             onClick={handleSign}
             className="btn btn-primary btn-block uppercase text-white"
           >
             Sign message
-          </button>
+          </button> */}
+          <Button type="primary" onClick={handleSign} className="uppercase">
+            Sign Message
+          </Button>
           <div className="mt-4">
             <ErrorMessage message={error} />
           </div>
@@ -186,6 +190,6 @@ export default function SignMessage() {
           );
         })}
       </div>
-    </form>
+    </main>
   );
 }
