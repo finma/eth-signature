@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { ethers } from "ethers";
-import ErrorMessage from "./ErrorMessage";
-import { keccak256 } from "js-sha3";
+import { db, storage } from "@/config/firebase";
+import { UserAuth } from "@/context/AuthContext";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
-import QRCode from "qrcode";
-import Image from "next/image";
-import { saveAs } from "file-saver";
 import Button from "./Button";
+import { ethers } from "ethers";
+import { saveAs } from "file-saver";
+import { addDoc, collection } from "firebase/firestore";
+import { getDownloadURL, ref, uploadString } from "firebase/storage";
+import { keccak256 } from "js-sha3";
+import Image from "next/image";
+import QRCode from "qrcode";
+import { useEffect, useState } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import { v4 } from "uuid";
 
 type Signature =
   | {
@@ -18,7 +23,16 @@ type Signature =
     }
   | undefined;
 
-const signMessage = async ({ setError, message }: any) => {
+type DataFirestore = {
+  uid: string;
+  message: string;
+  address: string;
+  signature: string;
+  imageUrl: string;
+};
+
+// SIGN MESSAGE
+const signMessage = async ({ message }: any) => {
   try {
     if (!window.ethereum)
       throw new Error("No crypto wallet found. Please install it.");
@@ -39,19 +53,58 @@ const signMessage = async ({ setError, message }: any) => {
       address,
     };
   } catch (err: any) {
-    setError(err.message);
+    toast.error(err.message);
+  }
+};
+
+// ADD DATA TO FIRESTORE
+const addDataToFirestore = async ({
+  uid,
+  message,
+  address,
+  signature,
+  imageUrl,
+}: DataFirestore) => {
+  try {
+    await addDoc(collection(db, "history"), {
+      uid: uid,
+      message: message,
+      address: address,
+      signature: signature,
+      imageUrl,
+    });
+
+    return {
+      error: false,
+      message: "Success add data to firestore!",
+    };
+  } catch (error) {
+    // console.log("error: ", error);
+
+    return {
+      error: true,
+      message: "Failed add data to firestore!",
+    };
   }
 };
 
 export default function SignMessage() {
-  const [signatures, setSignatures] = useState<Signature[]>([]);
-  const [error, setError] = useState<string>();
+  const { user } = UserAuth();
+
+  const [signature, setSignature] = useState<Signature>();
   const [selectedDocs, setSelectedDocs] = useState<File[]>([]);
   const [messageHash, setMessageHash] = useState<string>();
   const [src, setSrc] = useState<string>();
+  const [address, setAddress] = useState<string>();
+  const [currentUser, setCurrentUser] = useState(user);
 
+  useEffect(() => {
+    // console.log("user: ", user);
+    setCurrentUser(user);
+  }, [user]);
+
+  // HANDLE INPUT FILE
   const handleInput = (e: React.ChangeEvent<any>) => {
-    setError("");
     e.target.files?.length && setSelectedDocs(Array.from(e.target.files));
 
     if (e.target.files?.length) {
@@ -69,48 +122,78 @@ export default function SignMessage() {
     }
   };
 
+  // HANDLE SIGN MESSAGE/FILE
   const handleSign = async () => {
     if (selectedDocs.length) {
-      // const data = new FormData(e.target);
-      setError("");
       const sig: Signature = await signMessage({
-        setError,
-        // message: data.get("message")?.toString(),
         message: messageHash,
       });
       if (sig) {
+        setAddress(sig.address);
         generateQRCode(JSON.stringify(sig));
-        setSignatures([...signatures, sig]);
+        setSignature(sig);
       }
     } else {
-      setError("Input file");
+      toast.error("Input file");
     }
   };
 
+  // GENERATE SIGNATURE TO QRCODE
   const generateQRCode = (data: any) => QRCode.toDataURL(data).then(setSrc);
 
+  // HANDLE DOWNLOAD IMAGE
   const downloadImage = (filename: string) => {
-    saveAs(src!, `QRCODE-${filename.replace(".pdf", "")}.png`);
+    console.log("src: ", src);
+    saveAs(src!, `SIGNATURE-${filename.replace(".pdf", ".png")}`);
+  };
+
+  // HANDLE SAVE DATA TO HISTORY
+  const handleSaveToHistory = async (filename: string) => {
+    try {
+      // console.log("currentUser: ", currentUser);
+
+      if (Object.keys(currentUser).length !== 0) {
+        const imageRef = ref(
+          storage,
+          `images/signatures/${currentUser.uid}/SIGNATURE-${filename}-${v4()}`
+        );
+
+        await uploadString(imageRef, src!, "data_url");
+
+        const imageUrl = await getDownloadURL(imageRef);
+
+        // console.log("download: ", imageUrl);
+
+        const result = await addDataToFirestore({
+          uid: currentUser.uid,
+          message: messageHash!,
+          address: address!,
+          signature: signature?.signature!,
+          imageUrl: imageUrl,
+        });
+
+        if (!result.error) {
+          toast.success("Success save to history!");
+        } else {
+          toast.error(result.message);
+        }
+      } else {
+        toast.error("Please login to save to history!");
+      }
+    } catch (error) {
+      toast.error("Error!");
+    }
   };
 
   return (
     <main className="w-full">
       <div className="credit-card w-full mx-auto rounded-xl bg-white">
-        <main className="mt-4 p-4">
+        <div className="mt-4 p-4">
           <h1 className="text-xl font-semibold text-gray-700 text-center">
             Sign messages
           </h1>
           <div className="">
             <div className="my-3">
-              {/* MESSAGE WITH TEXT */}
-              {/* <textarea
-                  required
-                  // type="text"
-                  name="message"
-                  className="textarea w-full h-24 textarea-bordered focus:ring focus:outline-none"
-                  placeholder="Message"
-                /> */}
-
               {/* MESSAGE WITH FILE */}
               <label className="form-control w-full">
                 <div className="label">
@@ -125,7 +208,7 @@ export default function SignMessage() {
               </label>
             </div>
           </div>
-        </main>
+        </div>
 
         {/* PDF VIEWER */}
         <DocViewer
@@ -136,60 +219,53 @@ export default function SignMessage() {
           pluginRenderers={DocViewerRenderers}
         />
         <footer className="p-4">
-          {/* <button
-            // type="submit"
-            onClick={handleSign}
-            className="btn btn-primary btn-block uppercase text-white"
-          >
-            Sign message
-          </button> */}
           <Button type="primary" onClick={handleSign} className="uppercase">
             Sign Message
           </Button>
-          <div className="mt-4">
-            <ErrorMessage message={error} />
-          </div>
         </footer>
 
-        {signatures.map((sig: Signature, idx: number) => {
-          console.log(selectedDocs[idx]);
-          const filename = selectedDocs[idx].name;
-          return (
-            <div className="p-2" key={sig?.signature}>
-              {/* <QRCode value={sig?.signature!} size={64} /> */}
-              <p className="font-semibold">File: {filename}</p>
-              <p className="font-semibold">Signer: {sig?.address}</p>
-              <div className="text-center w-[200px]">
-                <Image src={src!} width={200} height={200} alt="QRCode" />
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    downloadImage(filename);
-                  }}
-                  className="btn"
-                >
-                  Download
-                </button>
-              </div>
-              <div className="my-3">
-                <p>Catatan: Simpan QRCode diatas untuk memverifikasi dokumen</p>
-                {/* <p>
-                  Message {idx + 1}: {sig?.message}
-                </p>
-                <p>Signer: {sig?.address}</p>
-                <textarea
-                  // type="text"
-                  readOnly
-                  ref={resultBox.current}
-                  className="textarea w-full h-24 textarea-bordered focus:ring focus:outline-none"
-                  placeholder="Generated signature"
-                  value={sig?.signature}
-                /> */}
-              </div>
+        {/* SIGNATURE */}
+        {signature && (
+          <div className="p-2" key={signature?.signature}>
+            <p className="font-semibold">File: {selectedDocs[0].name}</p>
+            <p className="font-semibold">Signer: {signature?.address}</p>
+            <div className="text-center w-[200px]">
+              <Image src={src!} width={200} height={200} alt="QRCode" />
+              <button
+                onClick={(e) => {
+                  downloadImage(selectedDocs[0].name);
+                }}
+                className="btn"
+              >
+                Download
+              </button>
+              <button
+                onClick={(e) => {
+                  handleSaveToHistory(selectedDocs[0].name);
+                }}
+                className="btn"
+              >
+                Upload
+              </button>
             </div>
-          );
-        })}
+            <div className="my-3">
+              <p>
+                Catatan: Simpan Signature/QRCode diatas untuk memverifikasi
+                dokumen
+              </p>
+            </div>
+          </div>
+        )}
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        theme="light"
+      />
     </main>
   );
 }
