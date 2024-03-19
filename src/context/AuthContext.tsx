@@ -3,6 +3,7 @@
 import { auth } from "@/config/firebase";
 import {
   GoogleAuthProvider,
+  createUserWithEmailAndPassword,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -19,6 +20,34 @@ export const AuthContextProvider = ({
   children: React.ReactNode;
 }) => {
   const [user, setUser] = useState({});
+
+  const createAccount = async (email: string, password: string) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      const user = userCredential.user;
+
+      Cookies.set("uid", user.uid);
+
+      return {
+        error: false,
+        message: "Signup with email success!",
+      };
+    } catch (error: any) {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+
+      return {
+        error: true,
+        message: errorMessage,
+        code: errorCode,
+      };
+    }
+  };
 
   const googleSignIn = async () => {
     try {
@@ -103,7 +132,9 @@ export const AuthContextProvider = ({
   }, []);
 
   return (
-    <AuthContext.Provider value={{ googleSignIn, emailSignIn, logOut, user }}>
+    <AuthContext.Provider
+      value={{ createAccount, googleSignIn, emailSignIn, logOut, user }}
+    >
       {children}
     </AuthContext.Provider>
   );
