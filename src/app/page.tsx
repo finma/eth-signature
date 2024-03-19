@@ -7,7 +7,7 @@ export default function Home() {
   return (
     <>
       <NavBar />
-      <main className="flex flex-wrap min-h-screen">
+      <main className="flex flex-wrap min-h-screen bg-base-200">
         <Tabs>
           <Tab label="Sign Message">
             <SignMessage />
