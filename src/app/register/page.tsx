@@ -13,9 +13,9 @@ export default function LoginPage() {
   const [isPassword, setIsPassword] = useState(true);
 
   const router = useRouter();
-  const { googleSignIn } = UserAuth();
+  const { createAccount, googleSignIn } = UserAuth();
 
-  const handleLogin = (e: React.ChangeEvent<any>) => {
+  const handleCreateAccount = async (e: React.ChangeEvent<any>) => {
     e.preventDefault();
 
     const data = new FormData(e.target);
@@ -26,14 +26,28 @@ export default function LoginPage() {
 
     if (password !== confirmPassword) {
       console.log("error: confirm password");
+      toast.error("Confirm password not match");
       return;
     }
 
-    console.log("data login: ", {
-      email: data.get("email"),
-      password: data.get("password"),
-      confirmPassword: data.get("confirmPassword"),
-    });
+    // console.log("data login: ", {
+    //   email: data.get("email"),
+    //   password: data.get("password"),
+    //   confirmPassword: data.get("confirmPassword"),
+    // });
+
+    const result = await createAccount(email as string, password as string);
+
+    if (result.error) {
+      if (result.code === "auth/email-already-in-use") {
+        toast.error("Email already in use");
+      } else {
+        toast.error(result.message);
+      }
+    } else {
+      toast.success(result.message);
+      router.push("/");
+    }
   };
 
   const handleRegisterWithGoogle = async () => {
@@ -55,7 +69,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-center w-full">
               <div className="flex items-center xl:p-10">
                 <form
-                  onSubmit={handleLogin}
+                  onSubmit={handleCreateAccount}
                   className="flex flex-col w-full h-full pb-6 text-center bg-white rounded-3xl"
                 >
                   <h3 className="mb-3 text-4xl font-extrabold text-dark-grey-900">
