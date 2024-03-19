@@ -170,7 +170,9 @@ export default function LoginPage() {
                   </label>
 
                   {/* BUTTON SIGNUP */}
-                  <Button type="primary">SignUp</Button>
+                  <Button type="primary" className="md:w-96">
+                    Sign Up
+                  </Button>
 
                   {/* NOT REGISTERED */}
                   <p className="text-sm leading-relaxed text-grey-900 mt-4">
