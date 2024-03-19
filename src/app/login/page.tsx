@@ -8,6 +8,7 @@ import { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Button from "@/components/Button";
 
 export default function LoginPage() {
   const [isPassword, setIsPassword] = useState(true);
@@ -33,7 +34,11 @@ export default function LoginPage() {
       // console.log("result: ", result);
 
       if (result.error) {
-        toast.error(result.message);
+        if (result.code === "auth/invalid-credential") {
+          toast.error("Email or password is wrong");
+        } else {
+          toast.error(result.message);
+        }
       } else {
         toast.success(result.message);
         router.push("/");
@@ -134,9 +139,7 @@ export default function LoginPage() {
                   </label>
 
                   {/* BUTTON SIGNIN */}
-                  <button className="btn btn-primary w-full md:w-96 rounded-2xl text-white">
-                    Sign In
-                  </button>
+                  <Button type="primary">SignIn</Button>
 
                   {/* NOT REGISTERED */}
                   <p className="text-sm leading-relaxed text-grey-900 mt-4">
