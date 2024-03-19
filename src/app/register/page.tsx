@@ -8,6 +8,7 @@ import Link from "next/link";
 import { UserAuth } from "@/context/AuthContext";
 import { ToastContainer, toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import Button from "@/components/Button";
 
 export default function LoginPage() {
   const [isPassword, setIsPassword] = useState(true);
@@ -168,10 +169,8 @@ export default function LoginPage() {
                     </label>
                   </label>
 
-                  {/* BUTTON SIGNIN */}
-                  <button className="btn btn-primary w-full md:w-96 rounded-2xl text-white">
-                    Sign In
-                  </button>
+                  {/* BUTTON SIGNUP */}
+                  <Button type="primary">SignuP</Button>
 
                   {/* NOT REGISTERED */}
                   <p className="text-sm leading-relaxed text-grey-900 mt-4">
