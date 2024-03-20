@@ -2,7 +2,6 @@
 
 import NavBar from "@/components/NavBar";
 import { db } from "@/config/firebase";
-import { UserAuth } from "@/context/AuthContext";
 import {
   faCalendarDays,
   faDownload,
@@ -22,19 +21,17 @@ import {
 import React, { useEffect, useState } from "react";
 import { saveAs } from "file-saver";
 import { toast } from "react-toastify";
+import Cookies from "js-cookie";
 
 const HistoryPage = () => {
   const colletionRef = collection(db, "history");
 
-  const { user } = UserAuth();
-
-  const currentUserId = user ? user.uid : null;
   const [histories, setHistories] = useState([]);
 
   useEffect(() => {
-    // console.log("user: ", currentUserId);
-    if (currentUserId) {
-      const q = query(colletionRef, where("uid", "==", currentUserId));
+    const uid = Cookies.get("uid");
+    if (uid) {
+      const q = query(colletionRef, where("uid", "==", uid));
 
       const unsub = onSnapshot(q, (querySnapshot) => {
         const items: any = [];
