@@ -6,7 +6,7 @@ import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import Button from "./Button";
 import { ethers } from "ethers";
 import { saveAs } from "file-saver";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { getDownloadURL, ref, uploadString } from "firebase/storage";
 import { keccak256 } from "js-sha3";
 import Image from "next/image";
@@ -25,6 +25,7 @@ type Signature =
 
 type DataFirestore = {
   uid: string;
+  filename: string;
   message: string;
   address: string;
   signature: string;
@@ -60,6 +61,7 @@ const signMessage = async ({ message }: any) => {
 // ADD DATA TO FIRESTORE
 const addDataToFirestore = async ({
   uid,
+  filename,
   message,
   address,
   signature,
@@ -67,11 +69,13 @@ const addDataToFirestore = async ({
 }: DataFirestore) => {
   try {
     await addDoc(collection(db, "history"), {
-      uid: uid,
-      message: message,
-      address: address,
-      signature: signature,
+      uid,
+      filename,
+      message,
+      address,
+      signature,
       imageUrl,
+      createdAt: serverTimestamp(),
     });
 
     return {
@@ -105,6 +109,7 @@ export default function SignMessage() {
 
   // HANDLE INPUT FILE
   const handleInput = (e: React.ChangeEvent<any>) => {
+    setSignature(undefined);
     e.target.files?.length && setSelectedDocs(Array.from(e.target.files));
 
     if (e.target.files?.length) {
@@ -155,7 +160,9 @@ export default function SignMessage() {
       if (Object.keys(currentUser).length !== 0) {
         const imageRef = ref(
           storage,
-          `images/signatures/${currentUser.uid}/SIGNATURE-${filename}-${v4()}`
+          `images/signatures/${
+            currentUser.uid
+          }/SIGNATURE-${filename}-${v4()}.png`
         );
 
         await uploadString(imageRef, src!, "data_url");
@@ -166,10 +173,11 @@ export default function SignMessage() {
 
         const result = await addDataToFirestore({
           uid: currentUser.uid,
+          filename,
           message: messageHash!,
           address: address!,
           signature: signature?.signature!,
-          imageUrl: imageUrl,
+          imageUrl,
         });
 
         if (!result.error) {
