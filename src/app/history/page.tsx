@@ -1,6 +1,8 @@
 "use client";
 
 import NavBar from "@/components/NavBar";
+import { db } from "@/config/firebase";
+import { UserAuth } from "@/context/AuthContext";
 import {
   faCalendarDays,
   faDownload,
@@ -9,9 +11,75 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Menu } from "@headlessui/react";
-import React from "react";
+import {
+  QuerySnapshot,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { saveAs } from "file-saver";
+import { toast } from "react-toastify";
+
+type DataFirestore = {
+  uid: string;
+  filename: string;
+  message: string;
+  address: string;
+  signature: string;
+  imageUrl: string;
+};
 
 const HistoryPage = () => {
+  const colletionRef = collection(db, "history");
+
+  const { user } = UserAuth();
+
+  const currentUserId = user ? user.uid : null;
+  const [histories, setHistories] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    console.log("user: ", currentUserId);
+    if (currentUserId) {
+      const q = query(colletionRef, where("uid", "==", currentUserId));
+      setLoading(true);
+
+      const unsub = onSnapshot(q, (querySnapshot) => {
+        const items: any = [];
+        querySnapshot.forEach((doc) => {
+          items.push({ id: doc.id, ...doc.data() });
+        });
+        setHistories(items);
+        setLoading(false);
+      });
+
+      return () => {
+        unsub();
+      };
+    }
+  }, []);
+
+  // HANDLE DOWNLOAD IMAGE
+  const downloadImage = (filename: string, imageUrl: string) => {
+    // console.log("imageUrl: ", imageUrl);
+    saveAs(imageUrl, `SIGNATURE.png`);
+  };
+
+  const handleDeleteHistory = async (id: string) => {
+    try {
+      const historyRef = doc(colletionRef, id);
+      await deleteDoc(historyRef);
+
+      toast.success("Success delete history!");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <>
       <NavBar />
@@ -56,486 +124,106 @@ const HistoryPage = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr
-                  tabIndex={0}
-                  className="focus:outline-none h-16 border border-gray-100 rounded"
-                >
-                  <td className="w-full">
-                    <div className="flex items-center pl-5">
-                      <p className="text-base font-medium leading-none text-gray-700 mr-2">
-                        Sejarah Nilai.pdf
-                      </p>
-                    </div>
-                  </td>
+                {histories.map((history: any, idx) => {
+                  console.log("history: ", history);
+                  const date = new Date(history.createdAt.seconds * 1000); // Kalikan dengan 1000 karena JavaScript menggunakan milidetik, sedangkan timestamp dalam satuan detik
+                  const day = date.getDate();
+                  const month = date.getMonth() + 1; // Bulan dimulai dari 0, jadi perlu ditambah 1
+                  const year = date.getFullYear();
 
-                  <td className="pl-5 ">
-                    <div className="flex items-center">
-                      <FontAwesomeIcon icon={faCalendarDays} />
-                      <p className="text-sm leading-none text-gray-600 ml-2">
-                        04/07/2024
-                      </p>
-                    </div>
-                  </td>
+                  // Untuk memastikan format dd/mm/yyyy, perlu melakukan pengecekan untuk menambahkan nol di depan angka jika diperlukan
+                  const formattedDate = `${day < 10 ? "0" + day : day}/${
+                    month < 10 ? "0" + month : month
+                  }/${year}`;
 
-                  <td>
-                    <Menu as="div" className="relative px-5 pt-2">
-                      <Menu.Button className="focus:ring-2 rounded-md focus:outline-none">
-                        <FontAwesomeIcon
-                          icon={faEllipsis}
-                          className="text-gray-600"
-                        />
-                      </Menu.Button>
-                      <Menu.Items className="menu menu-sm dropdown-content absolute  mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`${
-                                active
-                                  ? "bg-primary text-white"
-                                  : "text-gray-900"
-                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                            >
-                              {active ? (
-                                <FontAwesomeIcon
-                                  icon={faDownload}
-                                  className="mr-2"
-                                />
-                              ) : (
-                                <FontAwesomeIcon
-                                  icon={faDownload}
-                                  className="mr-2"
-                                />
-                              )}
-                              Download Signature
-                            </button>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`${
-                                active ? "bg-error text-white" : "text-gray-900"
-                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                            >
-                              {active ? (
-                                <FontAwesomeIcon
-                                  icon={faTrash}
-                                  className="mr-2"
-                                />
-                              ) : (
-                                <FontAwesomeIcon
-                                  icon={faTrash}
-                                  className="mr-2"
-                                />
-                              )}
-                              Delete
-                            </button>
-                          )}
-                        </Menu.Item>
-                      </Menu.Items>
-                    </Menu>
-                  </td>
-                </tr>
-                <tr
-                  tabIndex={0}
-                  className="focus:outline-none h-16 border border-gray-100 rounded"
-                >
-                  <td className="w-full">
-                    <div className="flex items-center pl-5">
-                      <p className="text-base font-medium leading-none text-gray-700 mr-2">
-                        Sejarah Nilai.pdf
-                      </p>
-                    </div>
-                  </td>
+                  return (
+                    <tr
+                      key={idx}
+                      tabIndex={0}
+                      className="focus:outline-none h-16 border border-gray-100 rounded"
+                    >
+                      <td className="w-full">
+                        <div className="flex items-center pl-5">
+                          <p className="text-base font-medium leading-none text-gray-700 mr-2">
+                            {history.filename}
+                          </p>
+                        </div>
+                      </td>
 
-                  <td className="pl-5 ">
-                    <div className="flex items-center">
-                      <FontAwesomeIcon icon={faCalendarDays} />
-                      <p className="text-sm leading-none text-gray-600 ml-2">
-                        04/07/2024
-                      </p>
-                    </div>
-                  </td>
+                      <td className="pl-5 ">
+                        <div className="flex items-center">
+                          <FontAwesomeIcon icon={faCalendarDays} />
+                          <p className="text-sm leading-none text-gray-600 ml-2">
+                            {formattedDate}
+                          </p>
+                        </div>
+                      </td>
 
-                  <td>
-                    <Menu as="div" className="relative px-5 pt-2">
-                      <Menu.Button className="focus:ring-2 rounded-md focus:outline-none">
-                        <FontAwesomeIcon
-                          icon={faEllipsis}
-                          className="text-gray-600"
-                        />
-                      </Menu.Button>
-                      <Menu.Items className="menu menu-sm dropdown-content absolute  mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`${
-                                active
-                                  ? "bg-primary text-white"
-                                  : "text-gray-900"
-                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                            >
-                              {active ? (
-                                <FontAwesomeIcon
-                                  icon={faDownload}
-                                  className="mr-2"
-                                />
-                              ) : (
-                                <FontAwesomeIcon
-                                  icon={faDownload}
-                                  className="mr-2"
-                                />
+                      <td>
+                        <Menu as="div" className="relative px-5 pt-2">
+                          <Menu.Button className="focus:ring-2 rounded-md focus:outline-none">
+                            <FontAwesomeIcon
+                              icon={faEllipsis}
+                              className="text-gray-600"
+                            />
+                          </Menu.Button>
+                          <Menu.Items className="menu menu-sm dropdown-content absolute  mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  onClick={() => {
+                                    downloadImage(
+                                      history.filename,
+                                      history.imageUrl
+                                    );
+                                  }}
+                                  className={`${
+                                    active
+                                      ? "bg-primary text-white"
+                                      : "text-gray-900"
+                                  } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                                >
+                                  <FontAwesomeIcon
+                                    icon={faDownload}
+                                    className="mr-2"
+                                  />
+                                  Download Signature
+                                </button>
                               )}
-                              Download Signature
-                            </button>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`${
-                                active ? "bg-error text-white" : "text-gray-900"
-                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                            >
-                              {active ? (
-                                <FontAwesomeIcon
-                                  icon={faTrash}
-                                  className="mr-2"
-                                />
-                              ) : (
-                                <FontAwesomeIcon
-                                  icon={faTrash}
-                                  className="mr-2"
-                                />
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  onClick={() => {
+                                    handleDeleteHistory(history.id);
+                                  }}
+                                  className={`${
+                                    active
+                                      ? "bg-error text-white"
+                                      : "text-gray-900"
+                                  } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                                >
+                                  {active ? (
+                                    <FontAwesomeIcon
+                                      icon={faTrash}
+                                      className="mr-2"
+                                    />
+                                  ) : (
+                                    <FontAwesomeIcon
+                                      icon={faTrash}
+                                      className="mr-2"
+                                    />
+                                  )}
+                                  Delete
+                                </button>
                               )}
-                              Delete
-                            </button>
-                          )}
-                        </Menu.Item>
-                      </Menu.Items>
-                    </Menu>
-                  </td>
-                </tr>
-                <tr
-                  tabIndex={0}
-                  className="focus:outline-none h-16 border border-gray-100 rounded"
-                >
-                  <td className="w-full">
-                    <div className="flex items-center pl-5">
-                      <p className="text-base font-medium leading-none text-gray-700 mr-2">
-                        Sejarah Nilai.pdf
-                      </p>
-                    </div>
-                  </td>
-
-                  <td className="pl-5 ">
-                    <div className="flex items-center">
-                      <FontAwesomeIcon icon={faCalendarDays} />
-                      <p className="text-sm leading-none text-gray-600 ml-2">
-                        04/07/2024
-                      </p>
-                    </div>
-                  </td>
-
-                  <td>
-                    <Menu as="div" className="relative px-5 pt-2">
-                      <Menu.Button className="focus:ring-2 rounded-md focus:outline-none">
-                        <FontAwesomeIcon
-                          icon={faEllipsis}
-                          className="text-gray-600"
-                        />
-                      </Menu.Button>
-                      <Menu.Items className="menu menu-sm dropdown-content absolute  mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`${
-                                active
-                                  ? "bg-primary text-white"
-                                  : "text-gray-900"
-                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                            >
-                              {active ? (
-                                <FontAwesomeIcon
-                                  icon={faDownload}
-                                  className="mr-2"
-                                />
-                              ) : (
-                                <FontAwesomeIcon
-                                  icon={faDownload}
-                                  className="mr-2"
-                                />
-                              )}
-                              Download Signature
-                            </button>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`${
-                                active ? "bg-error text-white" : "text-gray-900"
-                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                            >
-                              {active ? (
-                                <FontAwesomeIcon
-                                  icon={faTrash}
-                                  className="mr-2"
-                                />
-                              ) : (
-                                <FontAwesomeIcon
-                                  icon={faTrash}
-                                  className="mr-2"
-                                />
-                              )}
-                              Delete
-                            </button>
-                          )}
-                        </Menu.Item>
-                      </Menu.Items>
-                    </Menu>
-                  </td>
-                </tr>
-                <tr
-                  tabIndex={0}
-                  className="focus:outline-none h-16 border border-gray-100 rounded"
-                >
-                  <td className="w-full">
-                    <div className="flex items-center pl-5">
-                      <p className="text-base font-medium leading-none text-gray-700 mr-2">
-                        Sejarah Nilai.pdf
-                      </p>
-                    </div>
-                  </td>
-
-                  <td className="pl-5 ">
-                    <div className="flex items-center">
-                      <FontAwesomeIcon icon={faCalendarDays} />
-                      <p className="text-sm leading-none text-gray-600 ml-2">
-                        04/07/2024
-                      </p>
-                    </div>
-                  </td>
-
-                  <td>
-                    <Menu as="div" className="relative px-5 pt-2">
-                      <Menu.Button className="focus:ring-2 rounded-md focus:outline-none">
-                        <FontAwesomeIcon
-                          icon={faEllipsis}
-                          className="text-gray-600"
-                        />
-                      </Menu.Button>
-                      <Menu.Items className="menu menu-sm dropdown-content absolute  mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`${
-                                active
-                                  ? "bg-primary text-white"
-                                  : "text-gray-900"
-                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                            >
-                              {active ? (
-                                <FontAwesomeIcon
-                                  icon={faDownload}
-                                  className="mr-2"
-                                />
-                              ) : (
-                                <FontAwesomeIcon
-                                  icon={faDownload}
-                                  className="mr-2"
-                                />
-                              )}
-                              Download Signature
-                            </button>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`${
-                                active ? "bg-error text-white" : "text-gray-900"
-                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                            >
-                              {active ? (
-                                <FontAwesomeIcon
-                                  icon={faTrash}
-                                  className="mr-2"
-                                />
-                              ) : (
-                                <FontAwesomeIcon
-                                  icon={faTrash}
-                                  className="mr-2"
-                                />
-                              )}
-                              Delete
-                            </button>
-                          )}
-                        </Menu.Item>
-                      </Menu.Items>
-                    </Menu>
-                  </td>
-                </tr>
-                <tr
-                  tabIndex={0}
-                  className="focus:outline-none h-16 border border-gray-100 rounded"
-                >
-                  <td className="w-full">
-                    <div className="flex items-center pl-5">
-                      <p className="text-base font-medium leading-none text-gray-700 mr-2">
-                        Sejarah Nilai.pdf
-                      </p>
-                    </div>
-                  </td>
-
-                  <td className="pl-5 ">
-                    <div className="flex items-center">
-                      <FontAwesomeIcon icon={faCalendarDays} />
-                      <p className="text-sm leading-none text-gray-600 ml-2">
-                        04/07/2024
-                      </p>
-                    </div>
-                  </td>
-
-                  <td>
-                    <Menu as="div" className="relative px-5 pt-2">
-                      <Menu.Button className="focus:ring-2 rounded-md focus:outline-none">
-                        <FontAwesomeIcon
-                          icon={faEllipsis}
-                          className="text-gray-600"
-                        />
-                      </Menu.Button>
-                      <Menu.Items className="menu menu-sm dropdown-content absolute  mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`${
-                                active
-                                  ? "bg-primary text-white"
-                                  : "text-gray-900"
-                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                            >
-                              {active ? (
-                                <FontAwesomeIcon
-                                  icon={faDownload}
-                                  className="mr-2"
-                                />
-                              ) : (
-                                <FontAwesomeIcon
-                                  icon={faDownload}
-                                  className="mr-2"
-                                />
-                              )}
-                              Download Signature
-                            </button>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`${
-                                active ? "bg-error text-white" : "text-gray-900"
-                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                            >
-                              {active ? (
-                                <FontAwesomeIcon
-                                  icon={faTrash}
-                                  className="mr-2"
-                                />
-                              ) : (
-                                <FontAwesomeIcon
-                                  icon={faTrash}
-                                  className="mr-2"
-                                />
-                              )}
-                              Delete
-                            </button>
-                          )}
-                        </Menu.Item>
-                      </Menu.Items>
-                    </Menu>
-                  </td>
-                </tr>
-                <tr
-                  tabIndex={0}
-                  className="focus:outline-none h-16 border border-gray-100 rounded"
-                >
-                  <td className="w-full">
-                    <div className="flex items-center pl-5">
-                      <p className="text-base font-medium leading-none text-gray-700 mr-2">
-                        Sejarah Nilai.pdf
-                      </p>
-                    </div>
-                  </td>
-
-                  <td className="pl-5 ">
-                    <div className="flex items-center">
-                      <FontAwesomeIcon icon={faCalendarDays} />
-                      <p className="text-sm leading-none text-gray-600 ml-2">
-                        04/07/2024
-                      </p>
-                    </div>
-                  </td>
-
-                  <td>
-                    <Menu as="div" className="relative px-5 pt-2">
-                      <Menu.Button className="focus:ring-2 rounded-md focus:outline-none">
-                        <FontAwesomeIcon
-                          icon={faEllipsis}
-                          className="text-gray-600"
-                        />
-                      </Menu.Button>
-                      <Menu.Items className="menu menu-sm dropdown-content absolute  mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`${
-                                active
-                                  ? "bg-primary text-white"
-                                  : "text-gray-900"
-                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                            >
-                              {active ? (
-                                <FontAwesomeIcon
-                                  icon={faDownload}
-                                  className="mr-2"
-                                />
-                              ) : (
-                                <FontAwesomeIcon
-                                  icon={faDownload}
-                                  className="mr-2"
-                                />
-                              )}
-                              Download Signature
-                            </button>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`${
-                                active ? "bg-error text-white" : "text-gray-900"
-                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                            >
-                              {active ? (
-                                <FontAwesomeIcon
-                                  icon={faTrash}
-                                  className="mr-2"
-                                />
-                              ) : (
-                                <FontAwesomeIcon
-                                  icon={faTrash}
-                                  className="mr-2"
-                                />
-                              )}
-                              Delete
-                            </button>
-                          )}
-                        </Menu.Item>
-                      </Menu.Items>
-                    </Menu>
-                  </td>
-                </tr>
+                            </Menu.Item>
+                          </Menu.Items>
+                        </Menu>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
