@@ -24,6 +24,7 @@ export default function NavBar() {
       toast.error(result.message);
     } else {
       toast.success(result.message);
+      setCookie(undefined);
     }
   };
 
