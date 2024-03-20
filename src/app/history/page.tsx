@@ -12,7 +12,6 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Menu } from "@headlessui/react";
 import {
-  QuerySnapshot,
   collection,
   deleteDoc,
   doc,
@@ -24,15 +23,6 @@ import React, { useEffect, useState } from "react";
 import { saveAs } from "file-saver";
 import { toast } from "react-toastify";
 
-type DataFirestore = {
-  uid: string;
-  filename: string;
-  message: string;
-  address: string;
-  signature: string;
-  imageUrl: string;
-};
-
 const HistoryPage = () => {
   const colletionRef = collection(db, "history");
 
@@ -40,13 +30,11 @@ const HistoryPage = () => {
 
   const currentUserId = user ? user.uid : null;
   const [histories, setHistories] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    console.log("user: ", currentUserId);
+    // console.log("user: ", currentUserId);
     if (currentUserId) {
       const q = query(colletionRef, where("uid", "==", currentUserId));
-      setLoading(true);
 
       const unsub = onSnapshot(q, (querySnapshot) => {
         const items: any = [];
@@ -54,7 +42,6 @@ const HistoryPage = () => {
           items.push({ id: doc.id, ...doc.data() });
         });
         setHistories(items);
-        setLoading(false);
       });
 
       return () => {
