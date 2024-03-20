@@ -5,16 +5,17 @@ import { faUserCircle } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
+import Cookies from "js-cookie";
 
-const NavBar = () => {
-  const { logOut, user } = UserAuth();
-  const [currentUser, setCurrentUser] = useState(user);
+export default function NavBar() {
+  const { logOut } = UserAuth();
+  const [cookie, setCookie] = useState<string | undefined>();
 
   useEffect(() => {
-    // console.log("user: ", user);
-    setCurrentUser(user);
-  }, [user]);
+    const cookie = Cookies.get("uid");
+    setCookie(cookie);
+  }, []);
 
   const handleLogout = async () => {
     const result = await logOut();
@@ -23,7 +24,6 @@ const NavBar = () => {
       toast.error(result.message);
     } else {
       toast.success(result.message);
-      setCurrentUser({});
     }
   };
 
@@ -31,10 +31,12 @@ const NavBar = () => {
     <>
       <div className="navbar bg-base-100">
         <div className="flex-1">
-          <a className="btn btn-ghost text-xl">daisyUI</a>
+          <Link href="/" className="btn btn-ghost text-xl">
+            Versidig
+          </Link>
         </div>
         <div className="flex-none">
-          {Object.keys(currentUser).length !== 0 ? (
+          {cookie ? (
             <div className="dropdown dropdown-end">
               <div
                 tabIndex={0}
@@ -66,6 +68,4 @@ const NavBar = () => {
       </div>
     </>
   );
-};
-
-export default NavBar;
+}
