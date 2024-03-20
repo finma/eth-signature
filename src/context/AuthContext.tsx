@@ -55,7 +55,11 @@ export const AuthContextProvider = ({
   const googleSignIn = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const userCredential = await signInWithPopup(auth, provider);
+
+      const user = userCredential.user;
+
+      Cookies.set("uid", user.uid);
 
       return {
         error: false,
