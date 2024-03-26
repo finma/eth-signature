@@ -12,7 +12,7 @@ import { keccak256 } from "js-sha3";
 import Image from "next/image";
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { v4 } from "uuid";
 
 type Signature =
@@ -134,6 +134,7 @@ export default function SignMessage() {
         message: messageHash,
       });
       if (sig) {
+        console.log("result: ", sig);
         setAddress(sig.address);
         generateQRCode(JSON.stringify(sig));
         setSignature(sig);
@@ -155,8 +156,6 @@ export default function SignMessage() {
   // HANDLE SAVE DATA TO HISTORY
   const handleSaveToHistory = async (filename: string) => {
     try {
-      // console.log("currentUser: ", currentUser);
-
       if (Object.keys(currentUser).length !== 0) {
         const imageRef = ref(
           storage,
@@ -198,7 +197,7 @@ export default function SignMessage() {
       <div className="credit-card w-full mx-auto rounded-xl bg-white">
         <div className="mt-4 p-4">
           <h1 className="text-xl font-semibold text-gray-700 text-center">
-            Sign messages
+            Sign Document
           </h1>
           <div className="">
             <div className="my-3">
@@ -228,7 +227,7 @@ export default function SignMessage() {
         />
         <footer className="p-4">
           <Button type="primary" onClick={handleSign} className="uppercase">
-            Sign Message
+            Sign Document
           </Button>
         </footer>
 
@@ -265,15 +264,6 @@ export default function SignMessage() {
           </div>
         )}
       </div>
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        theme="light"
-      />
     </main>
   );
 }

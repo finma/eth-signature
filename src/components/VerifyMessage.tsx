@@ -8,6 +8,7 @@ import { keccak256 } from "js-sha3";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import QrScanner from "qr-scanner";
 import Image from "next/image";
+import { toast } from "react-toastify";
 
 const verifyMessage = async ({ message, address, signature }: any) => {
   try {
@@ -121,22 +122,29 @@ export default function VerifyMessage() {
   const handleVerification = async (e: React.ChangeEvent<any>) => {
     e.preventDefault();
     // const data = new FormData(e.target);
-    setSuccessMsg("");
-    setError("");
-    const isValid = await verifyMessage({
-      setError,
-      // message: data.get("message"),
-      message: messageHash,
-      address: address,
-      signature: signature,
-      // address: data.get("address"),
-      // signature: data.get("signature"),
-    });
+    // setSuccessMsg("");
+    // setError("");
+    // console.log("first", selectedDocs.length, imageQR?.length);
+    if (selectedDocs.length && imageQR?.length) {
+      const isValid = await verifyMessage({
+        setError,
+        // message: data.get("message"),
+        message: messageHash,
+        address: address,
+        signature: signature,
+        // address: data.get("address"),
+        // signature: data.get("signature"),
+      });
 
-    if (isValid) {
-      setSuccessMsg("Signature is valid!");
+      if (isValid) {
+        // setSuccessMsg("Signature is valid!");
+        toast.success("Signature is valid!");
+      } else {
+        toast.error("Invalid signature!");
+        // setError("Invalid signature");
+      }
     } else {
-      setError("Invalid signature");
+      toast.error("Input file!");
     }
   };
 
@@ -145,7 +153,7 @@ export default function VerifyMessage() {
       <div className="credit-card w-full mx-auto rounded-xl bg-white">
         <main className="mt-4 p-4">
           <h1 className="text-xl font-semibold text-gray-700 text-center">
-            Verify signature
+            Verify Document
           </h1>
           <div className="">
             <div className="my-3">
@@ -185,7 +193,7 @@ export default function VerifyMessage() {
                     onChange={handleInputQRCode}
                     className="file-input file-input-bordered file-input-primary file-input-sm w-full text-gray-400 text-sm"
                   />
-                  <button
+                  {/* <button
                     onClick={(e) => {
                       e.preventDefault();
                       handleScan(!btnScan);
@@ -193,7 +201,7 @@ export default function VerifyMessage() {
                     className="btn btn-sm btn-primary text-white"
                   >
                     Scan QRCode
-                  </button>
+                  </button> */}
                 </div>
               </label>
 
@@ -255,7 +263,7 @@ export default function VerifyMessage() {
             onClick={handleVerification}
             className="btn btn-primary btn-block uppercase text-white"
           >
-            Verify signature
+            Verify Document
           </button>
           <div className="mt-4">
             <ErrorMessage message={error} />
